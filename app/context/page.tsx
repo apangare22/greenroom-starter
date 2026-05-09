@@ -62,7 +62,7 @@ export default function ContextPage() {
           >
             /shows
           </Link>
-          . You&apos;ll see ~360 shows across 18 months at The Crescent. Click
+          . You&apos;ll see ~540 shows across 24 months at The Crescent. Click
           into any show to see its deal terms, ticket sales, expenses, and
           settlement.
         </Step>
@@ -81,7 +81,7 @@ export default function ContextPage() {
         <Step n={4}>
           Try Settle on a show with a <strong>Flat</strong> badge. The tool
           actually works for those. Flat guarantees are the most common deal
-          type at The Crescent (about 44% of bookings), and one of only two
+          type at The Crescent (about 33% of bookings), and one of only two
           kinds the tool can settle end-to-end.
         </Step>
         <Step n={5}>

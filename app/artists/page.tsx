@@ -22,7 +22,7 @@ export default async function ArtistsPage() {
         Artists
       </h1>
       <p className="text-[14px] text-ink-500 mt-2.5 max-w-xl">
-        {filtered.length} artists who have played The Crescent in the last 18
+        {filtered.length} artists who have played The Crescent in the last 24
         months. Bucketed by frequency.
       </p>
 

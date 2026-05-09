@@ -46,7 +46,7 @@ export default async function ShowsPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-7">
         <Stat label="Upcoming" value={String(upcoming.length)} />
-        <Stat label="Past 18 mo" value={String(past.length)} />
+        <Stat label="Past 24 mo" value={String(past.length)} />
         <Stat label="Settled" value={String(settledCount)} accent="brand" />
         <Stat
           label="Paid to artists"

@@ -47,7 +47,7 @@ export default async function ReportsPage() {
   return (
     <div className="px-10 py-8 max-w-5xl">
       <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-700 mb-2">
-        Last 18 months
+        Last 24 months
       </div>
       <h1 className="text-[32px] font-semibold text-ink-900 tracking-tight leading-none">
         Reports
