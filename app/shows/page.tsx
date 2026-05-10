@@ -1,12 +1,12 @@
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { getAllShows } from "@/lib/queries";
-import { StatusBadge, DealTypeBadge, PlainBadge } from "@/components/ui/badge";
 import {
-  formatShowDate,
   formatMoneyCompact,
+  formatShowDate,
+  formatShowMonth,
   relativeShowDate,
 } from "@/lib/format";
+import { ShowsToggle } from "./shows-toggle";
+import type { ShowRow } from "./shows-toggle";
 
 export default async function ShowsPage() {
   const rows = await getAllShows();
@@ -19,216 +19,117 @@ export default async function ShowsPage() {
     .filter((r) => new Date(r.show.date) < today)
     .reverse();
 
-  // Render everything — the collapsible sections handle the scroll problem.
-  const upcomingShown = upcoming;
-  const recentShown = past;
-
   const settledCount = past.filter((r) => r.settlement).length;
   const totalToArtists = past.reduce(
     (sum, r) => sum + (r.settlement?.totalToArtist ?? 0),
     0,
   );
+  const disputedCount = past.filter(
+    (r) => r.settlement?.status === "disputed",
+  ).length;
+
+  const serializeRows = (list: typeof rows): ShowRow[] =>
+    list.map(({ show, artist, deal, settlement }) => ({
+      show: {
+        id: show.id,
+        status: show.status as
+          | "booked"
+          | "advanced"
+          | "day_of"
+          | "settled"
+          | "closed",
+      },
+      artist: artist ? { name: artist.name } : null,
+      deal: deal
+        ? {
+            dealType: deal.dealType,
+            guaranteeFormatted:
+              deal.guaranteeAmount != null
+                ? formatMoneyCompact(deal.guaranteeAmount)
+                : null,
+          }
+        : null,
+      settlement: settlement
+        ? {
+            totalFormatted:
+              settlement.totalToArtist != null
+                ? formatMoneyCompact(settlement.totalToArtist)
+                : null,
+            status: settlement.status,
+          }
+        : null,
+      dateFormatted: formatShowDate(show.date),
+      dateRelative: relativeShowDate(show.date),
+      month: formatShowMonth(show.date),
+    }));
 
   return (
-    <div className="px-10 py-8 max-w-6xl">
+    <div className="px-12 py-10 max-w-7xl">
       {/* Hero */}
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-700 mb-2">
-        The Crescent · Nashville · 650 cap
+      <div className="mb-14">
+        <div className="eyebrow mb-3">
+          The Crescent · Nashville · 650 cap
+        </div>
+        <h1
+          className="font-display text-[52px] font-medium text-ink-900 leading-[1.02]"
+          style={{ letterSpacing: "-0.025em", fontOpticalSizing: "auto" }}
+        >
+          Shows
+        </h1>
+        <p className="text-[14px] text-ink-500 mt-3 max-w-lg leading-relaxed">
+          Mariana&apos;s home view. {past.length} completed, {upcoming.length} upcoming
+          {disputedCount > 0 && (
+            <>, <span className="text-rose-700">{disputedCount} disputed</span></>
+          )}
+          .
+        </p>
       </div>
-      <h1 className="text-[32px] font-semibold text-ink-900 tracking-tight leading-none">
-        Shows
-      </h1>
-      <p className="text-[14px] text-ink-500 mt-2.5 max-w-xl">
-        Mariana&apos;s home view. {upcoming.length} upcoming, {past.length}{" "}
-        completed in the last 24 months.
-      </p>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-7">
-        <Stat label="Upcoming" value={String(upcoming.length)} />
-        <Stat label="Past 24 mo" value={String(past.length)} />
-        <Stat label="Settled" value={String(settledCount)} accent="brand" />
-        <Stat
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-px bg-ink-200/40 rounded-xl overflow-hidden mb-14">
+        <StatCard label="Upcoming" value={String(upcoming.length)} />
+        <StatCard label="Completed" value={String(past.length)} />
+        <StatCard label="Settled" value={String(settledCount)} accent />
+        <StatCard
           label="Paid to artists"
           value={formatMoneyCompact(totalToArtists)}
           mono
         />
       </div>
 
-      <div className="mt-10">
-        <Section
-          title="Upcoming"
-          subtitle={
-            upcomingShown.length > 0
-              ? `Next ${upcomingShown.length}`
-              : "No upcoming shows"
-          }
-          rows={upcomingShown}
-          emptyText="No upcoming shows on the books."
-          defaultOpen={true}
-        />
-      </div>
-
-      <div className="mt-10">
-        <Section
-          title="Past"
-          subtitle="Click to expand · 24 months of history"
-          rows={recentShown}
-          emptyText="No completed shows yet."
-          defaultOpen={false}
-        />
-      </div>
+      {/* Show list */}
+      <ShowsToggle
+        upcoming={serializeRows(upcoming)}
+        past={serializeRows(past)}
+      />
     </div>
   );
 }
 
-function Stat({
+function StatCard({
   label,
   value,
   mono = false,
-  accent,
+  accent = false,
 }: {
   label: string;
   value: string;
   mono?: boolean;
-  accent?: "brand";
+  accent?: boolean;
 }) {
   return (
-    <div
-      className={`relative rounded-xl border bg-white p-4 shadow-[0_1px_2px_rgba(20,15,8,0.04)] ${
-        accent === "brand"
-          ? "border-brand-200"
-          : "border-ink-200"
-      }`}
-    >
-      {accent === "brand" && (
-        <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-brand-500 to-brand-700 rounded-t-xl" />
-      )}
-      <div className="text-[10.5px] font-medium uppercase tracking-wider text-ink-500">
-        {label}
-      </div>
+    <div className="bg-white px-6 py-5">
       <div
-        className={`text-[24px] font-semibold text-ink-900 mt-1 tracking-tight ${
-          mono ? "font-mono tabular" : ""
-        }`}
+        className={`text-[32px] font-medium leading-none ${
+          accent ? "text-brand-700" : "text-ink-900"
+        } ${mono ? "font-mono tabular !font-semibold" : "font-display"}`}
+        style={!mono ? { letterSpacing: "-0.02em" } : undefined}
       >
         {value}
       </div>
+      <div className="text-[11px] font-medium text-ink-400 uppercase tracking-[0.08em] mt-2">
+        {label}
+      </div>
     </div>
   );
-}
-
-function Section({
-  title,
-  subtitle,
-  rows,
-  emptyText,
-  defaultOpen = true,
-}: {
-  title: string;
-  subtitle: string;
-  rows: Awaited<ReturnType<typeof getAllShows>>;
-  emptyText: string;
-  defaultOpen?: boolean;
-}) {
-  return (
-    <details open={defaultOpen} className="group/section">
-      <summary className="flex items-baseline justify-between mb-3 cursor-pointer list-none select-none">
-        <h2 className="text-[14px] font-semibold text-ink-900 flex items-center gap-1.5">
-          <span className="inline-block w-3 text-[10px] text-ink-500 transition-transform group-open/section:rotate-90">
-            ▶
-          </span>
-          {title}
-          <span className="text-ink-400 font-normal ml-1">
-            ({rows.length})
-          </span>
-        </h2>
-        <span className="text-[12px] text-ink-500">{subtitle}</span>
-      </summary>
-      <div className="rounded-xl border border-ink-200 bg-white overflow-hidden shadow-[0_1px_2px_rgba(20,15,8,0.04),0_4px_12px_rgba(20,15,8,0.04)]">
-        {rows.length === 0 ? (
-          <div className="px-5 py-12 text-[13px] text-ink-500 text-center">
-            {emptyText}
-          </div>
-        ) : (
-          <ul className="divide-y divide-ink-100">
-            {rows.map(({ show, artist, deal, settlement }) => (
-              <li key={show.id}>
-                <Link
-                  href={`/shows/${show.id}`}
-                  className="grid grid-cols-[88px_1fr_auto_auto] items-center gap-4 px-5 py-3.5 hover:bg-canvas-soft transition-colors group"
-                >
-                  <div>
-                    <div className="text-[13px] font-medium text-ink-900">
-                      {formatShowDate(show.date)}
-                    </div>
-                    <div className="text-[11px] text-ink-500 mt-0.5">
-                      {relativeShowDate(show.date)}
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[14px] font-medium text-ink-900 truncate">
-                      {artist?.name ?? "—"}
-                    </div>
-                    <div className="text-[11.5px] text-ink-500 mt-1 flex items-center gap-2">
-                      {deal && <DealTypeBadge type={deal.dealType} />}
-                      {deal?.guaranteeAmount != null && (
-                        <span className="font-mono tabular">
-                          {formatMoneyCompact(deal.guaranteeAmount)}
-                          {deal.dealType === "vs" ? " min" : ""}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right pr-2">
-                    {settlement?.totalToArtist != null && (
-                      <>
-                        <div className="text-[10px] text-ink-500 uppercase tracking-wider">
-                          To artist
-                        </div>
-                        <div className="text-[13px] font-mono tabular font-medium text-ink-900">
-                          {formatMoneyCompact(settlement.totalToArtist)}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {settlement ? (
-                      <SettlementLifecyclePill status={settlement.status} />
-                    ) : (
-                      <StatusBadge status={show.status} />
-                    )}
-                    <ArrowUpRight className="h-3.5 w-3.5 text-ink-400 group-hover:text-ink-700 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </details>
-  );
-}
-
-const lifecycleStatusVariants: Record<
-  string,
-  { variant: "default" | "amber" | "brand" | "rose" | "sky"; label: string }
-> = {
-  draft: { variant: "default", label: "Draft" },
-  submitted: { variant: "sky", label: "Submitted" },
-  in_review: { variant: "sky", label: "In review" },
-  signed: { variant: "brand", label: "Signed" },
-  disputed: { variant: "rose", label: "Disputed" },
-  revised: { variant: "amber", label: "Revised" },
-  finalized: { variant: "brand", label: "Finalized" },
-  paid: { variant: "brand", label: "Paid" },
-  voided: { variant: "default", label: "Voided" },
-};
-
-function SettlementLifecyclePill({ status }: { status: string }) {
-  const v = lifecycleStatusVariants[status] ?? {
-    variant: "default" as const,
-    label: status,
-  };
-  return <PlainBadge variant={v.variant}>{v.label}</PlainBadge>;
 }

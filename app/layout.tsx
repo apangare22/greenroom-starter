@@ -1,8 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { Fraunces } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/layout/sidebar";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+  axes: ["opsz"],
+});
 
 export const metadata: Metadata = {
   title: {
@@ -35,7 +43,7 @@ export const metadata: Metadata = {
       "Operating system for independent music venues.",
   },
   robots: {
-    index: false, // candidate-facing instance — we don't want it indexed
+    index: false,
     follow: false,
   },
 };
@@ -43,7 +51,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#faf7f0" },
-    { media: "(prefers-color-scheme: dark)", color: "#181712" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1814" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -57,7 +65,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}
+      className={`${GeistSans.variable} ${GeistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex font-sans">
         <Sidebar />

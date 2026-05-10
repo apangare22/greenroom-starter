@@ -1,9 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/* ------------------------------------------------------------------ */
-/* Status badges                                                       */
-/* ------------------------------------------------------------------ */
-
 type Status = "booked" | "advanced" | "day_of" | "settled" | "closed";
 
 const statusStyles: Record<
@@ -13,31 +9,31 @@ const statusStyles: Record<
   booked: {
     bg: "bg-ink-100",
     fg: "text-ink-700",
-    ring: "ring-ink-200",
+    ring: "ring-ink-200/80",
     dot: "bg-ink-400",
   },
   advanced: {
     bg: "bg-sky-50",
     fg: "text-sky-800",
-    ring: "ring-sky-200",
+    ring: "ring-sky-200/80",
     dot: "bg-sky-700",
   },
   day_of: {
     bg: "bg-amber-50",
     fg: "text-amber-800",
-    ring: "ring-amber-200",
+    ring: "ring-amber-200/80",
     dot: "bg-amber-700",
   },
   settled: {
     bg: "bg-brand-50",
     fg: "text-brand-800",
-    ring: "ring-brand-200",
+    ring: "ring-brand-200/80",
     dot: "bg-brand-700",
   },
   closed: {
     bg: "bg-ink-50",
     fg: "text-ink-500",
-    ring: "ring-ink-200",
+    ring: "ring-ink-200/80",
     dot: "bg-ink-400",
   },
 };
@@ -64,7 +60,7 @@ export function StatusBadge({
     <span
       className={cn(
         "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md",
-        "text-[11px] font-medium ring-1 ring-inset",
+        "text-[10.5px] font-medium ring-1 ring-inset",
         s.bg,
         s.fg,
         s.ring,
@@ -77,35 +73,31 @@ export function StatusBadge({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Deal-type badges                                                    */
-/* ------------------------------------------------------------------ */
-
 const dealStyles: Record<string, { bg: string; fg: string; ring: string }> = {
   flat: {
     bg: "bg-ink-50",
     fg: "text-ink-700",
-    ring: "ring-ink-200",
+    ring: "ring-ink-200/80",
   },
   percentage_of_gross: {
     bg: "bg-ink-50",
     fg: "text-ink-700",
-    ring: "ring-ink-200",
+    ring: "ring-ink-200/80",
   },
   percentage_of_net: {
     bg: "bg-amber-50",
     fg: "text-amber-800",
-    ring: "ring-amber-200",
+    ring: "ring-amber-200/80",
   },
   vs: {
     bg: "bg-amber-50",
     fg: "text-amber-800",
-    ring: "ring-amber-200",
+    ring: "ring-amber-200/80",
   },
   door: {
     bg: "bg-rose-50",
     fg: "text-rose-800",
-    ring: "ring-rose-200",
+    ring: "ring-rose-200/80",
   },
 };
 
@@ -129,7 +121,7 @@ export function DealTypeBadge({
     <span
       className={cn(
         "inline-flex items-center px-2 py-0.5 rounded-md",
-        "text-[11px] font-medium ring-1 ring-inset",
+        "text-[10.5px] font-medium ring-1 ring-inset",
         s.bg,
         s.fg,
         s.ring,
@@ -141,10 +133,6 @@ export function DealTypeBadge({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Generic plain badge                                                 */
-/* ------------------------------------------------------------------ */
-
 export function PlainBadge({
   children,
   variant = "default",
@@ -155,17 +143,17 @@ export function PlainBadge({
   className?: string;
 }) {
   const variants = {
-    default: "bg-ink-100 text-ink-700 ring-ink-200",
-    amber: "bg-amber-50 text-amber-800 ring-amber-200",
-    brand: "bg-brand-50 text-brand-800 ring-brand-200",
-    rose: "bg-rose-50 text-rose-800 ring-rose-200",
-    sky: "bg-sky-50 text-sky-800 ring-sky-200",
+    default: "bg-ink-100 text-ink-700 ring-ink-200/80",
+    amber: "bg-amber-50 text-amber-800 ring-amber-200/80",
+    brand: "bg-brand-50 text-brand-800 ring-brand-200/80",
+    rose: "bg-rose-50 text-rose-800 ring-rose-200/80",
+    sky: "bg-sky-50 text-sky-800 ring-sky-200/80",
   };
   return (
     <span
       className={cn(
         "inline-flex items-center px-2 py-0.5 rounded-md",
-        "text-[11px] font-medium ring-1 ring-inset",
+        "text-[10.5px] font-medium ring-1 ring-inset",
         variants[variant],
         className,
       )}

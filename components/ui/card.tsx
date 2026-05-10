@@ -12,19 +12,19 @@ export function Card({
     brand:
       "before:bg-gradient-to-r before:from-brand-500 before:to-brand-700",
     amber:
-      "before:bg-gradient-to-r before:from-amber-300 before:to-amber-500",
-    rose: "before:bg-gradient-to-r before:from-rose-400 before:to-rose-600",
-    sky: "before:bg-gradient-to-r before:from-sky-400 before:to-sky-600",
+      "before:bg-gradient-to-r before:from-amber-200 before:to-amber-700",
+    rose: "before:bg-gradient-to-r before:from-rose-300 before:to-rose-700",
+    sky: "before:bg-gradient-to-r before:from-sky-300 before:to-sky-700",
   };
 
   return (
     <div
       className={cn(
-        "relative rounded-xl border border-ink-200 bg-white",
-        "shadow-[0_1px_2px_rgba(20,15,8,0.04),0_4px_12px_rgba(20,15,8,0.04)]",
+        "relative rounded-lg border border-ink-200/80 bg-white",
+        "shadow-[0_1px_2px_rgba(26,24,20,0.03)]",
         "overflow-hidden",
         accent && [
-          "before:absolute before:top-0 before:inset-x-0 before:h-[3px]",
+          "before:absolute before:top-0 before:inset-x-0 before:h-[2px]",
           accentClasses[accent],
         ],
         className,
@@ -41,7 +41,7 @@ export function CardHeader({
   return (
     <div
       className={cn(
-        "px-5 py-4 border-b border-ink-100 flex items-start justify-between gap-3",
+        "px-5 py-4 border-b border-ink-100/80 flex items-start justify-between gap-3",
         className,
       )}
       {...props}
@@ -56,7 +56,7 @@ export function CardTitle({
   return (
     <h3
       className={cn(
-        "text-[13.5px] font-semibold text-ink-900 tracking-tight",
+        "text-[13px] font-semibold text-ink-900 tracking-tight",
         className,
       )}
       {...props}
@@ -90,7 +90,7 @@ export function CardFooter({
   return (
     <div
       className={cn(
-        "px-5 py-3 border-t border-ink-100 text-[12px] text-ink-500",
+        "px-5 py-3 border-t border-ink-100/80 text-[12px] text-ink-500",
         className,
       )}
       {...props}
@@ -98,7 +98,6 @@ export function CardFooter({
   );
 }
 
-/** Label/value pair used inside cards. */
 export function Field({
   label,
   value,
@@ -112,7 +111,7 @@ export function Field({
 }) {
   return (
     <div className={className}>
-      <div className="text-[10.5px] font-medium text-ink-500 uppercase tracking-wider mb-1">
+      <div className="eyebrow text-[10px] text-ink-500 mb-1">
         {label}
       </div>
       <div

@@ -1,18 +1,17 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The Greenroom logomark.
- *
- * Custom-drawn "G": a near-complete circle stroked in white-on-emerald,
- * with a horizontal bar cutting in from the right at the midline. The bar
- * does double duty — it closes the G shape and reads as a single tick of an
- * audio level meter, which is a quiet nod to what we make.
- *
- * Three variants:
- *   - <Logomark />     just the icon (square, scales freely)
- *   - <Wordmark />     mark + "Greenroom" type
- *   - <LogoFlat />     a single-color version for footers / dark surfaces
+ * The Greenroom mark — four vertical bars in a crescendo-peak pattern,
+ * evoking a live audio level meter frozen at the moment the room peaks.
+ * Asymmetric: rises medium → tall → tallest → drops to short.
  */
+
+const BARS = [
+  { x: 7.5, y: 14.5, h: 11 },
+  { x: 14.5, y: 11, h: 18 },
+  { x: 21.5, y: 9, h: 22 },
+  { x: 28.5, y: 16.5, h: 7 },
+] as const;
 
 export function Logomark({
   size = 32,
@@ -30,28 +29,24 @@ export function Logomark({
       className={cn("shrink-0", className)}
       aria-label="Greenroom"
     >
-      {/* Tile background — gradient gives it a subtle dimensional feel */}
       <defs>
         <linearGradient id="gr-bg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#059669" />
           <stop offset="1" stopColor="#047857" />
         </linearGradient>
       </defs>
-      <rect width="40" height="40" rx="9" fill="url(#gr-bg)" />
-
-      {/* The mark: a 270° arc with a horizontal bar cutting in at the midline.
-         The bar reads as both the closing of the G and a single tick of an
-         audio level meter. */}
-      <g
-        stroke="white"
-        strokeWidth="2.6"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M 27 13.4 A 8 8 0 1 0 27 26.6" />
-        <line x1="27" y1="20" x2="20.5" y2="20" />
-      </g>
+      <rect width="40" height="40" rx="8" fill="url(#gr-bg)" />
+      {BARS.map((b, i) => (
+        <rect
+          key={i}
+          x={b.x}
+          y={b.y}
+          width={4}
+          height={b.h}
+          rx={2}
+          fill="white"
+        />
+      ))}
     </svg>
   );
 }
@@ -67,8 +62,13 @@ export function Wordmark({
     <div className={cn("flex items-center gap-2.5", className)}>
       <Logomark size={size} />
       <span
-        className="font-semibold text-ink-900 tracking-tight"
-        style={{ fontSize: Math.round(size * 0.55), letterSpacing: "-0.012em" }}
+        className="font-display text-ink-900 tracking-tight"
+        style={{
+          fontSize: Math.round(size * 0.56),
+          fontWeight: 500,
+          letterSpacing: "-0.02em",
+          fontOpticalSizing: "auto",
+        }}
       >
         Greenroom
       </span>
@@ -76,7 +76,6 @@ export function Wordmark({
   );
 }
 
-/** Single-color stroked version for footers, loading states, etc. */
 export function LogoFlat({
   size = 32,
   className,
@@ -95,16 +94,17 @@ export function LogoFlat({
       className={cn("shrink-0", className)}
       aria-label="Greenroom"
     >
-      <g
-        stroke={color}
-        strokeWidth="2.6"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M 27 13.4 A 8 8 0 1 0 27 26.6" />
-        <line x1="27" y1="20" x2="20.5" y2="20" />
-      </g>
+      {BARS.map((b, i) => (
+        <rect
+          key={i}
+          x={b.x}
+          y={b.y}
+          width={4}
+          height={b.h}
+          rx={2}
+          fill={color}
+        />
+      ))}
     </svg>
   );
 }

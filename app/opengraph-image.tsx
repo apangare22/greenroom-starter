@@ -13,16 +13,16 @@ export default function OpenGraphImage() {
           width: "100%",
           height: "100%",
           background:
-            "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(16, 185, 129, 0.18), transparent 60%), #faf7f0",
+            "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(16, 185, 129, 0.14), transparent 60%), #faf7f0",
           display: "flex",
           flexDirection: "column",
           padding: "80px",
           fontFamily: "system-ui",
         }}
       >
-        {/* Mark */}
+        {/* Mark + Wordmark */}
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <svg width="72" height="72" viewBox="0 0 40 40">
+          <svg width="64" height="64" viewBox="0 0 40 40">
             <defs>
               <linearGradient
                 id="gr-bg"
@@ -36,23 +36,17 @@ export default function OpenGraphImage() {
                 <stop offset="1" stopColor="#047857" />
               </linearGradient>
             </defs>
-            <rect width="40" height="40" rx="9" fill="url(#gr-bg)" />
-            <g
-              stroke="white"
-              strokeWidth="2.6"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M 27 13.4 A 8 8 0 1 0 27 26.6" />
-              <line x1="27" y1="20" x2="20.5" y2="20" />
-            </g>
+            <rect width="40" height="40" rx="8" fill="url(#gr-bg)" />
+            <rect x="7.5" y="14.5" width="4" height="11" rx="2" fill="white" />
+            <rect x="14.5" y="11" width="4" height="18" rx="2" fill="white" />
+            <rect x="21.5" y="9" width="4" height="22" rx="2" fill="white" />
+            <rect x="28.5" y="16.5" width="4" height="7" rx="2" fill="white" />
           </svg>
           <span
             style={{
-              fontSize: 38,
-              fontWeight: 600,
-              color: "#181712",
+              fontSize: 36,
+              fontWeight: 500,
+              color: "#1a1814",
               letterSpacing: "-0.02em",
             }}
           >
@@ -71,10 +65,10 @@ export default function OpenGraphImage() {
         >
           <div
             style={{
-              fontSize: 22,
+              fontSize: 18,
               fontWeight: 600,
               color: "#047857",
-              letterSpacing: "0.06em",
+              letterSpacing: "0.1em",
               textTransform: "uppercase",
             }}
           >
@@ -82,9 +76,9 @@ export default function OpenGraphImage() {
           </div>
           <div
             style={{
-              fontSize: 72,
-              fontWeight: 600,
-              color: "#181712",
+              fontSize: 68,
+              fontWeight: 500,
+              color: "#1a1814",
               letterSpacing: "-0.025em",
               lineHeight: 1.05,
             }}

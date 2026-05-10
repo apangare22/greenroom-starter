@@ -15,7 +15,6 @@ export default async function ReportsPage() {
     }))
     .sort((a, b) => b.count - a.count);
 
-  // Lifecycle distribution — only show stages with at least one settlement
   const lifecycleOrder = [
     "draft",
     "submitted",
@@ -37,6 +36,8 @@ export default async function ReportsPage() {
     }))
     .filter((d) => d.count > 0);
 
+  const maxLifecycleCount = Math.max(...lifecycleData.map((d) => d.count));
+
   const inFlight =
     (r.settlementStatus.draft ?? 0) +
     (r.settlementStatus.submitted ?? 0) +
@@ -44,25 +45,32 @@ export default async function ReportsPage() {
     (r.settlementStatus.signed ?? 0) +
     (r.settlementStatus.finalized ?? 0);
 
-  return (
-    <div className="px-10 py-8 max-w-5xl">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-700 mb-2">
-        Last 24 months
-      </div>
-      <h1 className="text-[32px] font-semibold text-ink-900 tracking-tight leading-none">
-        Reports
-      </h1>
-      <p className="text-[14px] text-ink-500 mt-2.5 max-w-xl">
-        Aggregate metrics for The Crescent. The numbers the CEO is watching.
-      </p>
+  const unsupportedPct = (100 - r.inAppToolUsageRate * 100).toFixed(0);
+  const disputedPct = (r.disputedRate * 100).toFixed(1);
 
-      {/* CEO memo callout */}
-      <div className="mt-7 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-canvas-soft p-5 flex gap-4">
-        <div className="w-9 h-9 rounded-lg bg-white ring-1 ring-amber-200 flex items-center justify-center shrink-0 shadow-sm">
+  return (
+    <div className="px-12 py-10 max-w-7xl">
+      {/* Hero */}
+      <div className="mb-16">
+        <div className="eyebrow mb-3">Last 24 months</div>
+        <h1
+          className="font-display text-[48px] font-medium text-ink-900 leading-[1.05]"
+          style={{ letterSpacing: "-0.02em", fontOpticalSizing: "auto" }}
+        >
+          Reports
+        </h1>
+        <p className="text-[14px] text-ink-500 mt-3 max-w-xl leading-relaxed">
+          Aggregate metrics for The Crescent. The numbers the CEO is watching.
+        </p>
+      </div>
+
+      {/* CEO memo */}
+      <div className="rounded-xl border border-amber-200/60 bg-gradient-to-r from-amber-50/60 to-canvas p-6 flex gap-4 mb-10">
+        <div className="w-9 h-9 rounded-lg bg-white ring-1 ring-amber-200/50 flex items-center justify-center shrink-0">
           <AlertTriangle className="h-4 w-4 text-amber-700" />
         </div>
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-800 mb-1.5">
+          <div className="eyebrow text-[10px] text-amber-800 mb-2">
             From Pri&apos;s Q4 memo
           </div>
           <p className="text-[13.5px] text-ink-800 leading-relaxed">
@@ -80,99 +88,131 @@ export default async function ReportsPage() {
         </div>
       </div>
 
-      {/* Headline metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
+      {/* Metrics strip */}
+      <div className="flex items-baseline gap-10 pt-6 border-t border-ink-200/60 mb-14">
         <Stat label="Shows in window" value={String(r.showCount)} />
-        <Stat label="Settled" value={String(r.settledCount)} accent="brand" />
-        <Stat
-          label="Gross box office"
-          value={formatMoneyCompact(r.totalGross)}
-          mono
-        />
-        <Stat
-          label="Paid to artists"
-          value={formatMoneyCompact(r.totalToArtists)}
-          mono
-        />
+        <Stat label="Settled" value={String(r.settledCount)} accent />
+        <Stat label="Gross box office" value={formatMoneyCompact(r.totalGross)} mono />
+        <Stat label="Paid to artists" value={formatMoneyCompact(r.totalToArtists)} mono />
       </div>
 
-      {/* Settlement craft gap */}
-      <h2 className="text-[14px] font-semibold text-ink-900 mt-10 mb-3">
-        Settlement craft gap
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <BigMetric
-          label="Deal types supported by tool"
-          value={`${(r.inAppToolUsageRate * 100).toFixed(0)}%`}
-          subtext={`At The Crescent, ${(100 - r.inAppToolUsageRate * 100).toFixed(0)}% of deals — Vs deals, % of net, and door deals — are deal types the in-app tool can't settle. Across all customers, only about 18% actively use the tool at all.`}
-        />
-        <BigMetric
-          label="Disputed settlements"
-          value={`${(r.disputedRate * 100).toFixed(1)}%`}
-          subtext={`${r.settlementStatus.disputed ?? 0} of ${r.totalSettlements} past settlements ended in some form of dispute — either a withheld signature or a back-and-forth that altered the final number.`}
-        />
-      </div>
-
-      {/* Settlement lifecycle distribution */}
-      <h2 className="text-[14px] font-semibold text-ink-900 mt-10 mb-3">
-        Settlement lifecycle
-      </h2>
-      <p className="text-[12.5px] text-ink-600 mb-3 max-w-2xl leading-relaxed">
-        Where the {r.totalSettlements} settlements at The Crescent currently
-        sit. {inFlight} are still in flight — drafted but not yet paid.
-      </p>
-      <Card>
-        <CardContent>
-          <div className="space-y-2.5">
-            {lifecycleData.map(({ stage, count, pct }) => {
-              const isProblem =
-                stage === "disputed" || stage === "revised" || stage === "voided";
-              const isDone = stage === "paid";
-              return (
-                <div key={stage}>
-                  <div className="flex items-baseline justify-between mb-1">
-                    <span className="text-[12.5px] font-medium text-ink-900 capitalize">
-                      {stage.replace(/_/g, " ")}
-                    </span>
-                    <div className="text-[12.5px] text-ink-700 font-mono tabular">
-                      {count}
-                      <span className="text-ink-400">
-                        {" "}
-                        · {(pct * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-1.5 bg-ink-100 rounded-full overflow-hidden">
-                    <div
-                      className={
-                        isProblem
-                          ? "h-full bg-gradient-to-r from-rose-300 to-rose-500"
-                          : isDone
-                            ? "h-full bg-gradient-to-r from-brand-500 to-brand-700"
-                            : "h-full bg-gradient-to-r from-sky-300 to-sky-500"
-                      }
-                      style={{ width: `${pct * 100}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+      {/* Settlement craft gap — THE visual anchor */}
+      <div className="mb-16">
+        <h2
+          className="font-display text-[28px] font-medium text-ink-900 mb-8"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          Settlement craft gap
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="relative overflow-hidden rounded-xl border border-amber-200/60 bg-gradient-to-br from-amber-50/50 to-canvas p-8">
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-amber-300 to-amber-700" />
+            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-amber-100/30 rounded-full blur-2xl" />
+            <div className="relative">
+              <div className="eyebrow text-[10px] text-amber-800 mb-3">
+                Deals unsupported by tool
+              </div>
+              <div
+                className="text-[64px] font-mono tabular font-bold text-amber-800 leading-none"
+                style={{ letterSpacing: "-0.03em" }}
+              >
+                {unsupportedPct}%
+              </div>
+              <p className="text-[12.5px] text-ink-600 mt-4 leading-relaxed max-w-sm">
+                At The Crescent, {unsupportedPct}% of deals — Vs deals, % of net, and
+                door deals — are deal types the in-app tool can&apos;t settle.
+                Across all customers, only about 18% actively use the tool at all.
+              </p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+          <div className="relative overflow-hidden rounded-xl border border-rose-200/60 bg-gradient-to-br from-rose-50/40 to-canvas p-8">
+            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-rose-300 to-rose-700" />
+            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-rose-100/30 rounded-full blur-2xl" />
+            <div className="relative">
+              <div className="eyebrow text-[10px] text-rose-800 mb-3">
+                Disputed settlements
+              </div>
+              <div
+                className="text-[64px] font-mono tabular font-bold text-rose-800 leading-none"
+                style={{ letterSpacing: "-0.03em" }}
+              >
+                {disputedPct}%
+              </div>
+              <p className="text-[12.5px] text-ink-600 mt-4 leading-relaxed max-w-sm">
+                {r.settlementStatus.disputed ?? 0} of {r.totalSettlements} past
+                settlements ended in some form of dispute — either a withheld
+                signature or a back-and-forth that altered the final number.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Settlement funnel */}
+      <div className="mb-16">
+        <h2
+          className="font-display text-[24px] font-medium text-ink-900 mb-2"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          Settlement lifecycle
+        </h2>
+        <p className="text-[13px] text-ink-500 mb-6 max-w-2xl leading-relaxed">
+          Where the {r.totalSettlements} settlements at The Crescent currently
+          sit. {inFlight} are still in flight — drafted but not yet paid.
+        </p>
+        <div className="space-y-[6px]">
+          {lifecycleData.map(({ stage, count, pct }) => {
+            const isProblem =
+              stage === "disputed" || stage === "revised" || stage === "voided";
+            const isDone = stage === "paid";
+            const barWidth = maxLifecycleCount > 0 ? (count / maxLifecycleCount) * 100 : 0;
+            return (
+              <div key={stage} className="flex items-center gap-3 group">
+                <div className="w-20 text-right">
+                  <span className="text-[12px] font-medium text-ink-600 capitalize">
+                    {stage.replace(/_/g, " ")}
+                  </span>
+                </div>
+                <div className="flex-1 flex items-center gap-2">
+                  <div
+                    className={`h-7 rounded-[4px] transition-all duration-300 flex items-center min-w-[28px] ${
+                      isProblem
+                        ? "bg-rose-500/90"
+                        : isDone
+                          ? "bg-brand-700/90"
+                          : "bg-sky-500/80"
+                    }`}
+                    style={{ width: `${Math.max(barWidth, 3)}%` }}
+                  >
+                    <span className="text-[11px] font-mono tabular font-medium text-white px-2">
+                      {count}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono tabular text-ink-400">
+                    {(pct * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Recoups */}
       {r.settlementsWithRecoups > 0 && (
-        <>
-          <h2 className="text-[14px] font-semibold text-ink-900 mt-10 mb-3">
+        <div className="mb-16">
+          <h2
+            className="font-display text-[24px] font-medium text-ink-900 mb-2"
+            style={{ letterSpacing: "-0.02em" }}
+          >
             Recoups
           </h2>
-          <p className="text-[12.5px] text-ink-600 mb-3 max-w-2xl leading-relaxed">
+          <p className="text-[13px] text-ink-500 mb-5 max-w-2xl leading-relaxed">
             Venue costs taken off the top before artist payment. The most
             frequent source of settlement disputes — exactly the seam in the
             Coastal Spell thread.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <SmallMetric
               label="Settlements with recoups"
               value={String(r.settlementsWithRecoups)}
@@ -190,150 +230,164 @@ export default async function ReportsPage() {
               alarming={r.disputedRecoupValue > 0}
             />
           </div>
-        </>
+        </div>
       )}
 
       {/* Comps */}
-      <h2 className="text-[14px] font-semibold text-ink-900 mt-10 mb-3">
-        Comps
-      </h2>
-      <p className="text-[12.5px] text-ink-600 mb-3 max-w-2xl leading-relaxed">
-        Comp tickets given away across all shows. Whether comps count toward
-        gross is a deal-by-deal call — and a recurring source of friction.
-      </p>
-      <Card>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
-            <div>
-              <div className="text-[10.5px] font-medium uppercase tracking-wider text-ink-500">
-                Total comp tickets
+      <div className="mb-16">
+        <h2
+          className="font-display text-[24px] font-medium text-ink-900 mb-2"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          Comps
+        </h2>
+        <p className="text-[13px] text-ink-500 mb-5 max-w-2xl leading-relaxed">
+          Comp tickets given away across all shows. Whether comps count toward
+          gross is a deal-by-deal call — and a recurring source of friction.
+        </p>
+        <Card>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-6 mb-6 pb-5 border-b border-ink-100/60">
+              <div>
+                <div className="eyebrow text-[10px] text-ink-400 mb-1">
+                  Total comp tickets
+                </div>
+                <div className="text-[24px] font-mono tabular font-semibold text-ink-900">
+                  {r.totalCompTickets.toLocaleString()}
+                </div>
               </div>
-              <div className="text-[22px] font-semibold font-mono tabular text-ink-900 mt-1">
-                {r.totalCompTickets.toLocaleString()}
+              <div>
+                <div className="eyebrow text-[10px] text-ink-400 mb-1">
+                  Face value foregone
+                </div>
+                <div className="text-[24px] font-mono tabular font-semibold text-ink-900">
+                  {formatMoneyCompact(r.totalCompFaceValue)}
+                </div>
+              </div>
+              <div>
+                <div className="eyebrow text-[10px] text-ink-400 mb-1">
+                  Per show (avg)
+                </div>
+                <div className="text-[24px] font-mono tabular font-semibold text-ink-900">
+                  {Math.round(r.totalCompTickets / r.showCount)}
+                </div>
               </div>
             </div>
-            <div>
-              <div className="text-[10.5px] font-medium uppercase tracking-wider text-ink-500">
-                Face value foregone
-              </div>
-              <div className="text-[22px] font-semibold font-mono tabular text-ink-900 mt-1">
-                {formatMoneyCompact(r.totalCompFaceValue)}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10.5px] font-medium uppercase tracking-wider text-ink-500">
-                Per show (avg)
-              </div>
-              <div className="text-[22px] font-semibold font-mono tabular text-ink-900 mt-1">
-                {Math.round(r.totalCompTickets / r.showCount)}
-              </div>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {Object.entries(r.compsByCategory)
-              .sort(([, a], [, b]) => b - a)
-              .map(([cat, count]) => {
-                const pct =
-                  r.totalCompTickets > 0 ? count / r.totalCompTickets : 0;
-                const labels: Record<string, string> = {
-                  artist_gl: "Artist guest list",
-                  label: "Label / management",
-                  press: "Press",
-                  venue_staff: "Venue staff",
-                  sponsor: "Sponsor",
-                  promo: "Promo / radio",
-                  other: "Other",
-                };
-                return (
-                  <div key={cat}>
-                    <div className="flex items-baseline justify-between mb-1">
-                      <span className="text-[12.5px] text-ink-700">
-                        {labels[cat] ?? cat}
-                      </span>
-                      <div className="text-[12px] text-ink-700 font-mono tabular">
-                        {count.toLocaleString()}
-                        <span className="text-ink-400">
-                          {" "}
-                          · {(pct * 100).toFixed(0)}%
+            <div className="space-y-[6px]">
+              {Object.entries(r.compsByCategory)
+                .sort(([, a], [, b]) => b - a)
+                .map(([cat, count]) => {
+                  const pct =
+                    r.totalCompTickets > 0 ? count / r.totalCompTickets : 0;
+                  const maxCount = Math.max(
+                    ...Object.values(r.compsByCategory),
+                  );
+                  const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                  const labels: Record<string, string> = {
+                    artist_gl: "Artist guest list",
+                    label: "Label / management",
+                    press: "Press",
+                    venue_staff: "Venue staff",
+                    sponsor: "Sponsor",
+                    promo: "Promo / radio",
+                    other: "Other",
+                  };
+                  return (
+                    <div key={cat} className="flex items-center gap-3">
+                      <div className="w-32 text-right">
+                        <span className="text-[12px] text-ink-600">
+                          {labels[cat] ?? cat}
+                        </span>
+                      </div>
+                      <div className="flex-1 flex items-center gap-2">
+                        <div
+                          className="h-6 rounded-[3px] bg-ink-300/80 flex items-center min-w-[24px]"
+                          style={{ width: `${Math.max(barWidth, 3)}%` }}
+                        >
+                          <span className="text-[10px] font-mono tabular font-medium text-white px-1.5">
+                            {count.toLocaleString()}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono tabular text-ink-400">
+                          {(pct * 100).toFixed(0)}%
                         </span>
                       </div>
                     </div>
-                    <div className="h-1.5 bg-ink-100 rounded-full overflow-hidden">
+                  );
+                })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Deal mix */}
+      <div className="mb-10">
+        <h2
+          className="font-display text-[24px] font-medium text-ink-900 mb-5"
+          style={{ letterSpacing: "-0.02em" }}
+        >
+          Deal mix
+        </h2>
+        <Card>
+          <CardContent>
+            <div className="space-y-[6px]">
+              {dealMix.map(({ type, count, pct }) => {
+                const supported =
+                  type === "flat" || type === "percentage_of_gross";
+                const maxCount = Math.max(...dealMix.map((d) => d.count));
+                const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                const friendly: Record<string, string> = {
+                  flat: "Flat",
+                  percentage_of_gross: "% of gross",
+                  percentage_of_net: "% of net",
+                  vs: "Vs deal",
+                  door: "Door deal",
+                };
+                return (
+                  <div key={type} className="flex items-center gap-3">
+                    <div className="w-24 text-right flex items-center justify-end gap-1.5">
+                      <span className="text-[12px] font-medium text-ink-900">
+                        {friendly[type] ?? type}
+                      </span>
+                    </div>
+                    <div className="flex-1 flex items-center gap-2">
                       <div
-                        className="h-full bg-ink-400"
-                        style={{ width: `${pct * 100}%` }}
-                      />
+                        className={`h-7 rounded-[4px] flex items-center min-w-[28px] ${
+                          supported ? "bg-brand-700/90" : "bg-amber-500/90"
+                        }`}
+                        style={{ width: `${Math.max(barWidth, 3)}%` }}
+                      >
+                        <span className="text-[11px] font-mono tabular font-medium text-white px-2">
+                          {count}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-mono tabular text-ink-400">
+                          {(pct * 100).toFixed(0)}%
+                        </span>
+                        {supported ? (
+                          <span className="text-[9px] text-brand-700 uppercase tracking-[0.08em] font-semibold">
+                            in tool
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-amber-700 uppercase tracking-[0.08em] font-semibold">
+                            spreadsheet
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
               })}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Deal mix — kept at the bottom */}
-      <h2 className="text-[14px] font-semibold text-ink-900 mt-10 mb-3">
-        Deal mix
-      </h2>
-      <Card>
-        <CardContent>
-          <div className="space-y-3">
-            {dealMix.map(({ type, count, pct }) => {
-              const supported =
-                type === "flat" || type === "percentage_of_gross";
-              const friendly: Record<string, string> = {
-                flat: "Flat",
-                percentage_of_gross: "% of gross",
-                percentage_of_net: "% of net",
-                vs: "Vs deal",
-                door: "Door deal",
-              };
-              return (
-                <div key={type}>
-                  <div className="flex items-baseline justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-medium text-ink-900">
-                        {friendly[type] ?? type}
-                      </span>
-                      {supported ? (
-                        <span className="text-[10px] text-brand-700 uppercase tracking-wider font-semibold">
-                          in tool
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-amber-700 uppercase tracking-wider font-semibold">
-                          spreadsheet
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[13px] text-ink-700 font-mono tabular">
-                      {count}
-                      <span className="text-ink-400">
-                        {" "}
-                        · {(pct * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-2 bg-ink-100 rounded-full overflow-hidden">
-                    <div
-                      className={
-                        supported
-                          ? "h-full bg-gradient-to-r from-brand-500 to-brand-700"
-                          : "h-full bg-gradient-to-r from-amber-300 to-amber-500"
-                      }
-                      style={{ width: `${pct * 100}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="text-[11.5px] text-ink-500 mt-4 leading-relaxed">
+      <div className="text-[11.5px] text-ink-400 leading-relaxed">
         {r.dealsWithBonuses} of {r.totalDeals} deals carry structured bonuses
-        in {" "}
-        <code className="font-mono text-[10.5px] bg-ink-100 px-1 py-0.5 rounded">
+        in{" "}
+        <code className="font-mono text-[10px] bg-ink-100/60 px-1 py-0.5 rounded">
           bonuses_json
         </code>
         . An unknown number more sit only in the deal-notes prose.
@@ -346,29 +400,21 @@ function Stat({
   label,
   value,
   mono = false,
-  accent,
+  accent = false,
 }: {
   label: string;
   value: string;
   mono?: boolean;
-  accent?: "brand";
+  accent?: boolean;
 }) {
   return (
-    <div
-      className={`relative rounded-xl border bg-white p-4 shadow-[0_1px_2px_rgba(20,15,8,0.04)] ${
-        accent === "brand" ? "border-brand-200" : "border-ink-200"
-      }`}
-    >
-      {accent === "brand" && (
-        <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-brand-500 to-brand-700 rounded-t-xl" />
-      )}
-      <div className="text-[10.5px] font-medium uppercase tracking-wider text-ink-500">
-        {label}
-      </div>
+    <div>
+      <div className="eyebrow text-[10px] text-ink-400">{label}</div>
       <div
-        className={`text-[24px] font-semibold mt-1 tracking-tight text-ink-900 ${
-          mono ? "font-mono tabular" : ""
-        }`}
+        className={`text-[28px] font-display font-medium mt-1 leading-none ${
+          accent ? "text-brand-700" : "text-ink-900"
+        } ${mono ? "font-mono tabular !font-semibold !font-[unset]" : ""}`}
+        style={!mono ? { letterSpacing: "-0.02em" } : undefined}
       >
         {value}
       </div>
@@ -391,54 +437,29 @@ function SmallMetric({
 }) {
   return (
     <div
-      className={`rounded-xl border p-4 shadow-[0_1px_2px_rgba(20,15,8,0.04)] ${
+      className={`rounded-lg border p-5 ${
         alarming
-          ? "border-rose-200 bg-rose-50/50"
-          : "border-ink-200 bg-white"
+          ? "border-rose-200/60 bg-rose-50/20"
+          : "border-ink-200/60 bg-white"
       }`}
     >
       <div
-        className={`text-[10.5px] font-medium uppercase tracking-wider ${
-          alarming ? "text-rose-700" : "text-ink-500"
+        className={`eyebrow text-[10px] ${
+          alarming ? "text-rose-700" : "text-ink-400"
         }`}
       >
         {label}
       </div>
       <div
-        className={`text-[22px] font-semibold mt-1 tracking-tight ${
+        className={`text-[24px] font-semibold mt-1.5 leading-none ${
           alarming ? "text-rose-700" : "text-ink-900"
         } ${mono ? "font-mono tabular" : ""}`}
       >
         {value}
       </div>
       {subtext && (
-        <div className="text-[11.5px] text-ink-500 mt-1.5">{subtext}</div>
+        <div className="text-[11px] text-ink-400 mt-2">{subtext}</div>
       )}
-    </div>
-  );
-}
-
-function BigMetric({
-  label,
-  value,
-  subtext,
-}: {
-  label: string;
-  value: string;
-  subtext: string;
-}) {
-  return (
-    <div className="relative rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50/60 to-canvas-soft p-5 shadow-[0_1px_2px_rgba(20,15,8,0.04)]">
-      <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-amber-300 to-amber-500 rounded-t-xl" />
-      <div className="text-[10.5px] font-medium uppercase tracking-wider text-amber-800">
-        {label}
-      </div>
-      <div className="text-[40px] font-semibold mt-1.5 tracking-tight font-mono tabular text-amber-800 leading-none">
-        {value}
-      </div>
-      <div className="text-[12.5px] text-ink-700 mt-3 leading-relaxed">
-        {subtext}
-      </div>
     </div>
   );
 }
