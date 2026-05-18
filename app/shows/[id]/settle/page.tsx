@@ -29,6 +29,7 @@ import {
 } from "@/lib/format";
 import type { Settlement, Recoup } from "@/db/schema";
 import { Logomark } from "@/components/brand/logo";
+import SettlementIntelligence from "@/components/ui/settlement-intelligence";
 
 const RECOUP_LABELS: Record<Recoup["category"], string> = {
   marketing: "Marketing",
@@ -124,6 +125,23 @@ export default async function SettlePage({
 
       {settlement && (
         <LifecycleBar settlement={settlement} disputedRecoups={disputedRecoups.length} />
+      )}
+
+      {settlement && (
+        <SettlementIntelligence
+          showId={show.id}
+          settlementStatus={settlement.status}
+          signoffText={settlement.signoffText ?? null}
+          dealNotesFreetext={deal?.dealNotesFreetext ?? null}
+          structuredFields={{
+            dealType: deal?.dealType ?? "",
+            guaranteeAmount: deal?.guaranteeAmount ?? null,
+            percentage: deal?.percentage ?? null,
+            percentageBasis: deal?.percentageBasis ?? null,
+            expenseCap: deal?.expenseCap ?? null,
+            hospitalityCap: deal?.hospitalityCap ?? null,
+          }}
+        />
       )}
 
       <div className="space-y-6 mt-6">

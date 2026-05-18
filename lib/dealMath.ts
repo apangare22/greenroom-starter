@@ -168,6 +168,183 @@ export function calculateSettlement(input: CalcInput): SettlementCalculation {
     };
   }
 
+  // ---------- percentage of net ----------
+  if (deal.dealType === "percentage_of_net") {
+    if (deal.percentage == null) {
+      return {
+        supported: false,
+        reason: "Percentage-of-net deal is missing a percentage.",
+        dealType: deal.dealType,
+      };
+    }
+
+    const cappedExpenses =
+      deal.expenseCap != null
+        ? Math.min(totalExpenses, deal.expenseCap)
+        : totalExpenses;
+    const expensesWereCapped =
+      deal.expenseCap != null && totalExpenses > deal.expenseCap;
+    const netAfterExpenses = grossBoxOffice - totalFees - cappedExpenses;
+    const payout = netAfterExpenses * deal.percentage;
+    const baseToArtist =
+      deal.guaranteeAmount != null
+        ? Math.max(deal.guaranteeAmount, payout)
+        : payout;
+    const bonusResult = applyBonuses(parseBonuses(deal), {
+      gross: grossBoxOffice,
+      tickets,
+      capacity: venueCapacity,
+    });
+
+    const guaranteeWins =
+      deal.guaranteeAmount != null && deal.guaranteeAmount >= payout;
+
+    return {
+      supported: true,
+      grossBoxOffice,
+      netBoxOffice,
+      totalExpenses,
+      totalToArtist: baseToArtist + bonusResult.totalApplied,
+      steps: [
+        { label: "Gross box office", value: grossBoxOffice },
+        {
+          label: "Fees deducted",
+          value: -totalFees,
+          note: "Ticketing and processing fees are deducted before expenses.",
+        },
+        {
+          label: "Expenses deducted",
+          value: -cappedExpenses,
+          note: expensesWereCapped
+            ? `Expenses capped at ${deal.expenseCap?.toLocaleString()}; actual expenses were ${totalExpenses.toLocaleString()}.`
+            : deal.expenseCap != null
+              ? `Expense cap ${deal.expenseCap.toLocaleString()} was not reached.`
+              : "No expense cap.",
+        },
+        { label: "Net after expenses", value: netAfterExpenses },
+        {
+          label: `× ${(deal.percentage * 100).toFixed(0)}%`,
+          value: payout,
+          note: "Percentage applied to net after fees and capped expenses.",
+        },
+        {
+          label: guaranteeWins ? "Guarantee applies" : "Percentage applies",
+          value: baseToArtist,
+          note:
+            deal.guaranteeAmount == null
+              ? "No guarantee on this deal; percentage payout applies."
+              : guaranteeWins
+                ? "Guarantee is higher than percentage payout."
+                : "Percentage payout is higher than guarantee.",
+        },
+        ...bonusResult.applied.map((b) => ({
+          label: b.label,
+          value: b.amount,
+          note: b.reason,
+        })),
+      ],
+      finalFormula: bonusResult.applied.length
+        ? deal.guaranteeAmount != null
+          ? `max(${deal.guaranteeAmount}, net after expenses × ${deal.percentage}) + bonuses = ${(baseToArtist + bonusResult.totalApplied).toFixed(2)}`
+          : `net after expenses × ${deal.percentage} + bonuses = ${(baseToArtist + bonusResult.totalApplied).toFixed(2)}`
+        : deal.guaranteeAmount != null
+          ? `max(${deal.guaranteeAmount}, ${payout.toFixed(2)}) = ${baseToArtist.toFixed(2)}`
+          : `net after expenses × ${deal.percentage} = ${payout.toFixed(2)}`,
+      bonusesApplied: bonusResult.applied,
+      bonusesNotTriggered: bonusResult.notTriggered,
+    };
+  }
+
+  // ---------- guarantee vs percentage ----------
+  if (deal.dealType === "vs") {
+    if (deal.guaranteeAmount == null || deal.percentage == null) {
+      return {
+        supported: false,
+        reason: "Vs deal is missing a guarantee amount or percentage.",
+        dealType: deal.dealType,
+      };
+    }
+
+    const cappedExpenses =
+      deal.expenseCap != null
+        ? Math.min(totalExpenses, deal.expenseCap)
+        : totalExpenses;
+    const expensesWereCapped =
+      deal.expenseCap != null && totalExpenses > deal.expenseCap;
+    const percentagePayout =
+      deal.percentageBasis === "gross"
+        ? grossBoxOffice * deal.percentage
+        : (grossBoxOffice - totalFees - cappedExpenses) * deal.percentage;
+    const baseToArtist = Math.max(deal.guaranteeAmount, percentagePayout);
+    const bonusResult = applyBonuses(parseBonuses(deal), {
+      gross: grossBoxOffice,
+      tickets,
+      capacity: venueCapacity,
+    });
+    const guaranteeWins = deal.guaranteeAmount >= percentagePayout;
+
+    return {
+      supported: true,
+      grossBoxOffice,
+      netBoxOffice,
+      totalExpenses,
+      totalToArtist: baseToArtist + bonusResult.totalApplied,
+      steps: [
+        { label: "Gross box office", value: grossBoxOffice },
+        ...(deal.percentageBasis === "gross"
+          ? [
+              {
+                label: `× ${(deal.percentage * 100).toFixed(0)}% gross`,
+                value: percentagePayout,
+                note: "Percentage payout is based on gross box office.",
+              },
+            ]
+          : [
+              {
+                label: "Fees deducted",
+                value: -totalFees,
+                note: "Ticketing and processing fees are deducted before expenses.",
+              },
+              {
+                label: "Expenses deducted",
+                value: -cappedExpenses,
+                note: expensesWereCapped
+                  ? `Expenses capped at ${deal.expenseCap?.toLocaleString()}; actual expenses were ${totalExpenses.toLocaleString()}.`
+                  : deal.expenseCap != null
+                    ? `Expense cap ${deal.expenseCap.toLocaleString()} was not reached.`
+                    : "No expense cap.",
+              },
+              {
+                label: "Net after expenses",
+                value: grossBoxOffice - totalFees - cappedExpenses,
+              },
+              {
+                label: `× ${(deal.percentage * 100).toFixed(0)}% net`,
+                value: percentagePayout,
+                note: "Percentage payout is based on net after fees and capped expenses.",
+              },
+            ]),
+        {
+          label: guaranteeWins ? "Guarantee applies" : "Percentage applies",
+          value: baseToArtist,
+          note: guaranteeWins
+            ? "Guarantee applies — higher than percentage payout."
+            : "Percentage applies — higher than guarantee.",
+        },
+        ...bonusResult.applied.map((b) => ({
+          label: b.label,
+          value: b.amount,
+          note: b.reason,
+        })),
+      ],
+      finalFormula: bonusResult.applied.length
+        ? `max(${deal.guaranteeAmount}, ${percentagePayout.toFixed(2)}) + bonuses = ${(baseToArtist + bonusResult.totalApplied).toFixed(2)}`
+        : `max(${deal.guaranteeAmount}, ${percentagePayout.toFixed(2)}) = ${baseToArtist.toFixed(2)}`,
+      bonusesApplied: bonusResult.applied,
+      bonusesNotTriggered: bonusResult.notTriggered,
+    };
+  }
+
   // ---------- everything else: not supported ----------
   const friendlyName: Record<Deal["dealType"], string> = {
     flat: "Flat guarantee",
